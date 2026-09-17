@@ -32,11 +32,11 @@
 
 Public Runtimeを作るためにPrivate Dataをコピーしません。
 
-## Current migration status
+## Current implementation status
 
-### Phase E — Remote Publication / Human Review Gate
+### Phase E — Remote Publication / Human Review Gate — Implemented
 
-`feature/runtime-migration-phase-e` でPhase EをPublic Runtimeへ移行中です。
+Phase EのCurrent Runtime OwnerはこのRepositoryです。
 
 Phase Eは、Phase Dで検証済みのIntegration Branchを対象に:
 
@@ -74,8 +74,17 @@ ready_for_human_merge
 
 Regression TestはPublic `web-project-guide` のCurrent `maintenance/loop-policy.schema.json`を取得してUbuntu / Windowsで実行します。Private `web-project-data`はCIへcheckoutしません。
 
+Validation evidence:
+
+- Migration PR: `EliteMay/web-project-runtime#1`
+- PR head `24b0197170df9d6b193c3c6886f90730287263f3` — `Validate Loop Runtime #2` PASS
+- main `4ba80487fe7210e4150381b859cf6af1315de0a4` — `Validate Loop Runtime #3` PASS
+- Ubuntu / WindowsのPhase E regression PASS
+
+Private `web-project-data#153` のPhase E重複実装はmergeせずsupersededとしてcloseしています。
+
 ### Phase A–D
 
-Phase A–Dは現在 `web-project-data` 側の既存実装を維持しています。Phase EのPublic CI移行が完了してから段階的にPublic Runtimeへ移します。
+Phase A–Dは現在 `web-project-data` 側の既存実装を維持しています。Public / Private責務をさらに明確にするため、今後段階的にこのRepositoryへ移行します。
 
-移行完了前にData側Runtimeを削除せず、Source of Truth切替とRegression確認を先に行います。
+移行完了前にData側Runtimeを削除せず、Public Runtime側のRegression PASSとSource of Truth切替を先に行います。
