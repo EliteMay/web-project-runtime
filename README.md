@@ -16,6 +16,7 @@
 - Runtime Controller code
 - Runtime Schema
 - Generic regression fixture / test
+- Generic Work Queue transition helper
 - Generic reliability helper
 - Public GitHub Actions workflow
 - Runtime利用方法
@@ -34,9 +35,21 @@ Public Runtimeを作るためにPrivate Dataをコピーしません。
 
 ## Current implementation status
 
-### Phase E — Remote Publication / Human Review Gate — Implemented
+### Phase A–E — Implemented
 
-Phase EのCurrent Runtime OwnerはこのRepositoryです。
+Loop Engineering Phase A–EのCurrent Runtime OwnerはこのRepositoryです。
+
+```text
+Phase A  Read-only / Dry Run                  ✅
+Phase B  Isolated Worker                      ✅
+Phase C  Resume / Retry / Stuck / Control     ✅
+Phase D  Parallel Worker / Integration        ✅
+Phase E  Remote Publication / Human Review    ✅
+```
+
+Phase A–DはPrivate `web-project-data` で実装・検証されていたGeneric Runtimeを、実Project Dataを含めずこのPublic Repositoryへ移行しました。Phase Eは最初からPublic Runtime側へ移行済みです。
+
+### Phase E boundary
 
 Phase Eは、Phase Dで検証済みのIntegration Branchを対象に:
 
@@ -72,19 +85,23 @@ ready_for_human_merge
 - stale base / divergent remote branchは`needs_reconcile`
 - review branchとbase branchの同一指定を拒否
 
-Regression TestはPublic `web-project-guide` のCurrent `maintenance/loop-policy.schema.json`を取得してUbuntu / Windowsで実行します。Private `web-project-data`はCIへcheckoutしません。
+## Validation
+
+Public GitHub ActionsでPhase A–EをUbuntu / Windowsの両方でRegressionします。Private `web-project-data`はCIへcheckoutしません。
 
 Validation evidence:
 
-- Migration PR: `EliteMay/web-project-runtime#1`
-- PR head `24b0197170df9d6b193c3c6886f90730287263f3` — `Validate Loop Runtime #2` PASS
-- main `4ba80487fe7210e4150381b859cf6af1315de0a4` — `Validate Loop Runtime #3` PASS
-- Ubuntu / WindowsのPhase E regression PASS
+- Phase E migration: `EliteMay/web-project-runtime#1`
+- Phase E PR head `24b0197170df9d6b193c3c6886f90730287263f3` — `Validate Loop Runtime #2` PASS
+- Phase E main `4ba80487fe7210e4150381b859cf6af1315de0a4` — `Validate Loop Runtime #3` PASS
+- Phase A–D migration: `EliteMay/web-project-runtime#3`
+- PR head `80b808527c9ce778bd7cfd719295eb978bfded47` — `Validate Loop Runtime #7` PASS
+- Phase A–E × Ubuntu / Windowsの10 JobすべてPASS
 
 Private `web-project-data#153` のPhase E重複実装はmergeせずsupersededとしてcloseしています。
 
-### Phase A–D
+## Migration cleanup boundary
 
-Phase A–Dは現在 `web-project-data` 側の既存実装を維持しています。Public / Private責務をさらに明確にするため、今後段階的にこのRepositoryへ移行します。
+`web-project-data` に残る旧Runtime codeはPublic Runtimeへの移行元です。Public RuntimeのOwner切替と参照更新が完了するまで、Data側から機械的に削除しません。
 
-移行完了前にData側Runtimeを削除せず、Public Runtime側のRegression PASSとSource of Truth切替を先に行います。
+Current Common Contractは `web-project-guide`、実行RuntimeはこのRepository、実ProjectのPrivate State / Evidenceは `web-project-data` を正本とします。
