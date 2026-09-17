@@ -20,6 +20,114 @@ permissions:
   contents: read
 
 jobs:
+  phase-a:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Runtime repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+
+      - name: Check Phase A syntax
+        shell: bash
+        run: |
+          node --check tools/loop-engineering/json-schema-lite.mjs
+          node --check tools/loop-engineering/dry-run-controller.mjs
+          node --check tools/loop-engineering/test-dry-run-controller.mjs
+
+      - name: Test Phase A read-only dry run
+        shell: bash
+        run: node tools/loop-engineering/test-dry-run-controller.mjs
+
+  phase-b:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Runtime repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+
+      - name: Check Phase B syntax
+        shell: bash
+        run: |
+          node --check tools/work-queues/assign-work-queue.mjs
+          node --check tools/work-queues/claim-work-queue.mjs
+          node --check tools/work-queues/mark-work-queue-ready.mjs
+          node --check tools/work-queues/advance-work-queue.mjs
+          node --check tools/reliability/single-writer-lock.mjs
+          node --check tools/loop-engineering/phase-b-worker-controller.mjs
+          node --check tools/loop-engineering/test-phase-b-worker-controller.mjs
+
+      - name: Test Phase B isolated worker loop
+        shell: bash
+        run: node tools/loop-engineering/test-phase-b-worker-controller.mjs
+
+  phase-c:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Runtime repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+
+      - name: Check Phase C syntax
+        shell: bash
+        run: |
+          node --check tools/work-queues/block-work-queue.mjs
+          node --check tools/loop-engineering/phase-c-control.mjs
+          node --check tools/loop-engineering/phase-c-controller.mjs
+          node --check tools/loop-engineering/test-phase-c-controller.mjs
+
+      - name: Test Phase C resume, stuck, budget and control loop
+        shell: bash
+        run: node tools/loop-engineering/test-phase-c-controller.mjs
+
+  phase-d:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Runtime repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+
+      - name: Check Phase D syntax
+        shell: bash
+        run: |
+          node --check tools/loop-engineering/phase-d-controller.mjs
+          node --check tools/loop-engineering/test-phase-d-controller.mjs
+
+      - name: Test Phase D parallel worker orchestration
+        shell: bash
+        run: node tools/loop-engineering/test-phase-d-controller.mjs
+
   phase-e:
     strategy:
       fail-fast: false
