@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Loop Engineering Phase E Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "receiptId", "mode", "loopId", "repository", "startedAt", "finishedAt", "finalState", "sourceReceiptId", "baseBranch", "baseCommit", "integrationBranch", "integrationHead", "remote", "pullRequest", "checks", "approvalCount", "mergePerformed", "deployPerformed", "unresolvedItems"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "receiptId": { "type": "string", "minLength": 3 },
+    "mode": { "const": "phase_e_remote_pr" },
+    "loopId": { "type": "string", "minLength": 1 },
+    "repository": { "type": "string", "pattern": "^[^/\\s]+/[^/\\s]+$" },
+    "startedAt": { "type": "string", "minLength": 1 },
+    "finishedAt": { "type": "string", "minLength": 1 },
+    "finalState": { "enum": ["awaiting_checks", "awaiting_human_review", "ready_for_human_merge", "blocked", "cancelled", "needs_reconcile"] },
+    "sourceReceiptId": { "type": "string", "minLength": 3 },
+    "baseBranch": { "type": "string", "minLength": 1 },
+    "baseCommit": { "type": "string", "minLength": 1 },
+    "integrationBranch": { "type": "string", "minLength": 1 },
+    "integrationHead": { "type": "string", "minLength": 1 },
+    "remote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "branch", "publishedHead"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "branch": { "type": "string", "minLength": 1 },
+        "publishedHead": { "type": ["string", "null"] }
+      }
+    },
+    "pullRequest": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["id", "url", "state", "headSha", "baseBranch"],
+      "properties": {
+        "id": { "type": ["string", "integer"] },
+        "url": { "type": "string", "minLength": 1 },
+        "state": { "type": "string", "minLength": 1 },
+        "headSha": { "type": "string", "minLength": 1 },
+        "baseBranch": { "type": "string", "minLength": 1 }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "status", "evidence"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "status": { "enum": ["success", "failure", "pending", "cancelled", "timed_out", "action_required", "not_reported"] },
+          "evidence": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "approvalCount": { "type": "integer", "minimum": 0 },
+    "mergePerformed": { "const": false },
+    "deployPerformed": { "const": false },
+    "unresolvedItems": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  }
+}
