@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Loop Engineering Phase D Runtime State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "mode", "loopId", "repository", "status", "startedAt", "updatedAt", "completedAt", "baseBranch", "baseCommit", "generationRevision", "workers", "integration", "aggregateUsage", "unresolvedItems"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "mode": { "const": "phase_d_parallel" },
+    "loopId": { "type": "string", "minLength": 1 },
+    "repository": { "type": "string", "pattern": "^[^/\\s]+/[^/\\s]+$" },
+    "status": { "enum": ["running", "integrating", "passed", "failed", "blocked", "budget_exhausted", "cancelled", "needs_reconcile"] },
+    "startedAt": { "type": "string", "minLength": 1 },
+    "updatedAt": { "type": "string", "minLength": 1 },
+    "completedAt": { "type": ["string", "null"] },
+    "baseBranch": { "type": "string", "minLength": 1 },
+    "baseCommit": { "type": "string", "minLength": 1 },
+    "generationRevision": { "type": "integer", "minimum": 1 },
+    "workers": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["taskId", "lane", "holderId", "scopePaths", "semanticScopes", "assignmentRevision", "status", "workerBranch", "candidateCommit", "changedFiles", "verificationStatus", "usage"],
+        "properties": {
+          "taskId": { "type": "string", "minLength": 3 },
+          "lane": { "type": "string", "minLength": 1 },
+          "holderId": { "type": "string", "minLength": 8 },
+          "scopePaths": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "semanticScopes": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "assignmentRevision": { "type": ["integer", "null"] },
+          "status": { "enum": ["planned", "claimed", "working", "verified", "failed", "blocked", "completed"] },
+          "workerBranch": { "type": ["string", "null"] },
+          "candidateCommit": { "type": ["string", "null"] },
+          "changedFiles": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "verificationStatus": { "enum": ["not_run", "pass", "fail", "uncertain"] },
+          "usage": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["modelTokens", "externalCost", "implementationReported", "verificationReported"],
+            "properties": {
+              "modelTokens": { "type": "integer", "minimum": 0 },
+              "externalCost": { "type": "number", "minimum": 0 },
+              "implementationReported": { "type": "boolean" },
+              "verificationReported": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "integration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["branch", "order", "head", "status", "verificationStatus", "conflictTaskId"],
+      "properties": {
+        "branch": { "type": ["string", "null"] },
+        "order": { "type": "array", "items": { "type": "string", "minLength": 3 } },
+        "head": { "type": ["string", "null"] },
+        "status": { "enum": ["not_started", "applying", "verifying", "passed", "failed", "conflict"] },
+        "verificationStatus": { "enum": ["not_run", "pass", "fail", "uncertain"] },
+        "conflictTaskId": { "type": ["string", "null"] }
+      }
+    },
+    "aggregateUsage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["modelTokens", "externalCost", "wallClockMinutes"],
+      "properties": {
+        "modelTokens": { "type": "integer", "minimum": 0 },
+        "externalCost": { "type": "number", "minimum": 0 },
+        "wallClockMinutes": { "type": "number", "minimum": 0 }
+      }
+    },
+    "unresolvedItems": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  }
+}

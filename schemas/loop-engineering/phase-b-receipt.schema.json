@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Loop Engineering Phase B Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "receiptId",
+    "mode",
+    "loopId",
+    "repository",
+    "taskId",
+    "lane",
+    "startedAt",
+    "finishedAt",
+    "finalState",
+    "queue",
+    "repositoryEvidence",
+    "verification",
+    "usage",
+    "unresolvedItems"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "receiptId": { "type": "string", "minLength": 3 },
+    "mode": { "const": "phase_b_isolated_worker" },
+    "loopId": { "type": "string", "minLength": 1 },
+    "repository": { "type": "string", "pattern": "^[^/\\s]+/[^/\\s]+$" },
+    "taskId": { "type": "string", "minLength": 3 },
+    "lane": { "type": "string", "minLength": 1 },
+    "holderId": { "type": ["string", "null"] },
+    "startedAt": { "type": "string", "minLength": 1 },
+    "finishedAt": { "type": "string", "minLength": 1 },
+    "finalState": { "enum": ["passed", "failed", "blocked"] },
+    "queue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generationRevision", "assignmentRevision", "finalTaskStatus"],
+      "properties": {
+        "generationRevision": { "type": "integer", "minimum": 1 },
+        "assignmentRevision": { "type": ["integer", "null"] },
+        "finalTaskStatus": { "type": "string", "minLength": 1 }
+      }
+    },
+    "repositoryEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseBranch", "baseCommit", "workerBranch", "candidateCommit", "baseBranchUnchanged", "changedFiles"],
+      "properties": {
+        "baseBranch": { "type": "string", "minLength": 1 },
+        "baseCommit": { "type": "string", "minLength": 1 },
+        "workerBranch": { "type": ["string", "null"] },
+        "candidateCommit": { "type": ["string", "null"] },
+        "baseBranchUnchanged": { "type": "boolean" },
+        "changedFiles": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "protected", "workerTreeCleanAfterVerification", "satisfiedRequirements", "checks"],
+      "properties": {
+        "status": { "enum": ["pass", "fail", "uncertain", "not_run"] },
+        "protected": { "type": "boolean" },
+        "workerTreeCleanAfterVerification": { "type": ["boolean", "null"] },
+        "satisfiedRequirements": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "status"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "status": { "enum": ["pass", "fail", "uncertain", "not_run"] },
+              "evidence": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["modelTokens", "externalCost", "implementationReported", "verificationReported"],
+      "properties": {
+        "modelTokens": { "type": "integer", "minimum": 0 },
+        "externalCost": { "type": "number", "minimum": 0 },
+        "implementationReported": { "type": "boolean" },
+        "verificationReported": { "type": "boolean" }
+      }
+    },
+    "unresolvedItems": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Loop Engineering Phase C Control",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "loopId", "repository", "requestedAction", "requestedAt", "reason"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "loopId": { "type": "string", "minLength": 1 },
+    "repository": { "type": "string", "pattern": "^[^/\\s]+/[^/\\s]+$" },
+    "requestedAction": { "enum": ["run", "pause", "cancel"] },
+    "requestedAt": { "type": "string", "minLength": 1 },
+    "reason": { "type": ["string", "null"], "maxLength": 500 }
+  }
+}
