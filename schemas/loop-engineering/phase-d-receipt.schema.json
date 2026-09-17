@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Loop Engineering Phase D Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "receiptId", "mode", "loopId", "repository", "startedAt", "finishedAt", "finalState", "baseBranch", "baseCommit", "baseBranchUnchanged", "workers", "integration", "aggregateUsage", "unresolvedItems"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "receiptId": { "type": "string", "minLength": 3 },
+    "mode": { "const": "phase_d_parallel" },
+    "loopId": { "type": "string", "minLength": 1 },
+    "repository": { "type": "string", "pattern": "^[^/\\s]+/[^/\\s]+$" },
+    "startedAt": { "type": "string", "minLength": 1 },
+    "finishedAt": { "type": "string", "minLength": 1 },
+    "finalState": { "enum": ["passed", "failed", "blocked", "budget_exhausted", "cancelled", "needs_reconcile"] },
+    "baseBranch": { "type": "string", "minLength": 1 },
+    "baseCommit": { "type": "string", "minLength": 1 },
+    "baseBranchUnchanged": { "type": "boolean" },
+    "workers": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["taskId", "lane", "holderId", "scopePaths", "semanticScopes", "assignmentRevision", "workerBranch", "candidateCommit", "changedFiles", "verification", "usage", "finalTaskStatus"],
+        "properties": {
+          "taskId": { "type": "string", "minLength": 3 },
+          "lane": { "type": "string", "minLength": 1 },
+          "holderId": { "type": "string", "minLength": 8 },
+          "scopePaths": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "semanticScopes": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "assignmentRevision": { "type": ["integer", "null"] },
+          "workerBranch": { "type": ["string", "null"] },
+          "candidateCommit": { "type": ["string", "null"] },
+          "changedFiles": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "verification": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["status", "satisfiedRequirements", "checks"],
+            "properties": {
+              "status": { "enum": ["not_run", "pass", "fail", "uncertain"] },
+              "satisfiedRequirements": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+              "checks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["name", "status", "evidence"],
+                  "properties": {
+                    "name": { "type": "string", "minLength": 1 },
+                    "status": { "enum": ["pass", "fail", "uncertain", "not_run"] },
+                    "evidence": { "type": ["string", "null"] }
+                  }
+                }
+              }
+            }
+          },
+          "usage": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["modelTokens", "externalCost", "implementationReported", "verificationReported"],
+            "properties": {
+              "modelTokens": { "type": "integer", "minimum": 0 },
+              "externalCost": { "type": "number", "minimum": 0 },
+              "implementationReported": { "type": "boolean" },
+              "verificationReported": { "type": "boolean" }
+            }
+          },
+          "finalTaskStatus": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "integration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["branch", "order", "head", "status", "verification", "conflictTaskId"],
+      "properties": {
+        "branch": { "type": ["string", "null"] },
+        "order": { "type": "array", "items": { "type": "string", "minLength": 3 } },
+        "head": { "type": ["string", "null"] },
+        "status": { "enum": ["not_started", "passed", "failed", "conflict"] },
+        "verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "satisfiedRequirements", "checks"],
+          "properties": {
+            "status": { "enum": ["not_run", "pass", "fail", "uncertain"] },
+            "satisfiedRequirements": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "checks": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "status", "evidence"],
+                "properties": {
+                  "name": { "type": "string", "minLength": 1 },
+                  "status": { "enum": ["pass", "fail", "uncertain", "not_run"] },
+                  "evidence": { "type": ["string", "null"] }
+                }
+              }
+            }
+          }
+        },
+        "conflictTaskId": { "type": ["string", "null"] }
+      }
+    },
+    "aggregateUsage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["modelTokens", "externalCost", "wallClockMinutes"],
+      "properties": {
+        "modelTokens": { "type": "integer", "minimum": 0 },
+        "externalCost": { "type": "number", "minimum": 0 },
+        "wallClockMinutes": { "type": "number", "minimum": 0 }
+      }
+    },
+    "unresolvedItems": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  }
+}
