@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Loop Engineering Phase E State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "mode", "loopId", "repository", "status", "startedAt", "updatedAt", "completedAt", "sourceReceiptId", "baseBranch", "baseCommit", "integrationBranch", "integrationHead", "remoteName", "remoteBranch", "publishedHead", "pullRequest", "checks", "approvalCount", "unresolvedItems"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "mode": { "const": "phase_e_remote_pr" },
+    "loopId": { "type": "string", "minLength": 1 },
+    "repository": { "type": "string", "pattern": "^[^/\\s]+/[^/\\s]+$" },
+    "status": { "enum": ["publishing", "awaiting_checks", "awaiting_human_review", "ready_for_human_merge", "blocked", "cancelled", "needs_reconcile"] },
+    "startedAt": { "type": "string", "minLength": 1 },
+    "updatedAt": { "type": "string", "minLength": 1 },
+    "completedAt": { "type": ["string", "null"] },
+    "sourceReceiptId": { "type": "string", "minLength": 3 },
+    "baseBranch": { "type": "string", "minLength": 1 },
+    "baseCommit": { "type": "string", "minLength": 1 },
+    "integrationBranch": { "type": "string", "minLength": 1 },
+    "integrationHead": { "type": "string", "minLength": 1 },
+    "remoteName": { "type": "string", "minLength": 1 },
+    "remoteBranch": { "type": "string", "minLength": 1 },
+    "publishedHead": { "type": ["string", "null"] },
+    "pullRequest": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["id", "url", "state", "headSha", "baseBranch"],
+      "properties": {
+        "id": { "type": ["string", "integer"] },
+        "url": { "type": "string", "minLength": 1 },
+        "state": { "type": "string", "minLength": 1 },
+        "headSha": { "type": "string", "minLength": 1 },
+        "baseBranch": { "type": "string", "minLength": 1 }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "status", "evidence"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "status": { "enum": ["success", "failure", "pending", "cancelled", "timed_out", "action_required", "not_reported"] },
+          "evidence": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "approvalCount": { "type": "integer", "minimum": 0 },
+    "unresolvedItems": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  }
+}
