@@ -1,0 +1,58 @@
+name: Validate Loop Runtime
+
+on:
+  pull_request:
+    paths:
+      - 'tools/**'
+      - 'schemas/**'
+      - '.github/workflows/validate-loop-runtime.yml'
+      - 'README.md'
+  push:
+    branches:
+      - main
+    paths:
+      - 'tools/**'
+      - 'schemas/**'
+      - '.github/workflows/validate-loop-runtime.yml'
+      - 'README.md'
+
+permissions:
+  contents: read
+
+jobs:
+  phase-e:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Runtime repository
+        uses: actions/checkout@v4
+
+      - name: Checkout current Guide contract
+        uses: actions/checkout@v4
+        with:
+          repository: EliteMay/web-project-guide
+          path: guide-current
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check Phase E syntax
+        shell: bash
+        run: |
+          node --check tools/loop-engineering/json-schema-lite.mjs
+          node --check tools/reliability/failure-classification.mjs
+          node --check tools/reliability/provenance.mjs
+          node --check tools/reliability/git-transaction-core.mjs
+          node --check tools/loop-engineering/phase-e-controller.mjs
+          node --check tools/loop-engineering/test-phase-e-controller.mjs
+
+      - name: Test Phase E remote publication and human review gate
+        shell: bash
+        env:
+          LOOP_GUIDE_ROOT: ${{ github.workspace }}/guide-current
+        run: node tools/loop-engineering/test-phase-e-controller.mjs
