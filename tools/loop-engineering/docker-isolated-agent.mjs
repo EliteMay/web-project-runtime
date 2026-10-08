@@ -63,7 +63,7 @@ export function buildDockerWorkerArgs({
     '--pids-limit=' + pidsLimit, '--memory=' + maxMemory, '--memory-swap=' + maxMemory,
     '--cpus=1', '--user=' + uid + ':' + gid,
     '--tmpfs=/tmp:rw,nosuid,nodev,noexec,size=16m',
-    '--mount=type=bind,src=' + root + ',dst=/workspace,rw',
+    '--mount=type=bind,src=' + root + ',dst=/workspace',
     '--workdir=/workspace', '--env=HOME=/tmp', '--env=TMPDIR=/tmp',
     '--entrypoint', entrypoint, imageId, ...args
   ];
