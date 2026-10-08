@@ -367,4 +367,58 @@ function cleanup(root) {
   }
 }
 
+
+{
+  // A verifier calling everything PASS cannot bypass the policy by inventing
+  // one easy check and claiming the entire requirement inventory was satisfied.
+  const fixture = createFixture();
+  try {
+    const result = await runPhaseBWorker({
+      policyPath: fixture.policyPath, schemaPath: fixture.schemaPath,
+      queueDir: fixture.queueDir, repoRoot: fixture.repoRoot,
+      taskId: 'task-alpha', lane: 'A', holderId: 'phase-b-spoof-0001',
+      now: fixture.nowFn,
+      implement: async ({ worktreeDir }) => {
+        fs.writeFileSync(path.join(worktreeDir, 'src', 'result.txt'), 'fake-success\n', 'utf8');
+      },
+      verify: async ({ requiredRequirements }) => ({
+        status: 'pass', satisfiedRequirements: requiredRequirements,
+        checks: [{ name: 'convenient-fake-check', status: 'pass', evidence: 'not independent' }]
+      })
+    });
+    assert.equal(result.receipt.finalState, 'failed');
+    assert.equal(result.receipt.verification.status, 'fail');
+    assert.equal(result.receipt.queue.finalTaskStatus, 'working');
+    assert.equal(git(fixture.repoRoot, ['rev-parse', 'main']), fixture.baseCommit);
+  } finally {
+    cleanup(fixture.root);
+  }
+}
+
+{
+  // Required checks with no evidence are also NOT a valid PASS.
+  const fixture = createFixture();
+  try {
+    const result = await runPhaseBWorker({
+      policyPath: fixture.policyPath, schemaPath: fixture.schemaPath,
+      queueDir: fixture.queueDir, repoRoot: fixture.repoRoot,
+      taskId: 'task-alpha', lane: 'A', holderId: 'phase-b-empty-evidence-0001',
+      now: fixture.nowFn,
+      implement: async ({ worktreeDir }) => {
+        fs.writeFileSync(path.join(worktreeDir, 'src', 'result.txt'), 'no-evidence\n', 'utf8');
+      },
+      verify: async ({ requiredRequirements }) => ({
+        status: 'pass', satisfiedRequirements: requiredRequirements,
+        checks: [...basePolicy.verification.requiredChecks, ...requiredRequirements]
+          .map(name => ({ name, status: 'pass', evidence: '' }))
+      })
+    });
+    assert.equal(result.receipt.finalState, 'failed');
+    assert.equal(result.receipt.verification.status, 'fail');
+    assert.equal(git(fixture.repoRoot, ['rev-parse', 'main']), fixture.baseCommit);
+  } finally {
+    cleanup(fixture.root);
+  }
+}
+
 console.log('Loop Engineering Phase B isolated worker tests passed.');
