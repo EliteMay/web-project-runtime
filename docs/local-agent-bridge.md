@@ -47,6 +47,11 @@ worktree. Fields: `schemaVersion: 1`, `task: {taskId,title,scope,completionCrite
 
 - Exit 0: implementation process finished. It is **not** a PASS.
 - Nonzero exit, executable failure, timeout or excessive output: failed attempt.
+- A timeout/output overflow now attempts **process tree cleanup**: on POSIX by a
+  private process-group SIGKILL; on Windows by the system `taskkill.exe /T /F`.
+  A failed cleanup returns `LOCAL_AGENT_TREE_KILL_UNVERIFIED`, never PASS.
+  This does **not** contain intentionally detached descendants or prove that a
+  subsequent normal exit cannot leave a background process running.
 - stdout/stderr are deliberately discarded rather than copied to public logs.
 - No model tokens or external cost are inferred from child-provided data.
   Finite usage budgets require **trusted independently gathered metering**.
@@ -60,8 +65,10 @@ This bridge is **not** an OS-level sandbox. A local process can still read files
 write outside the worktree, start child processes or access the network when its
 OS account permits it. For real use, the operator must provide an independently
 restricted OS user/container/VM, filesystem and network restrictions, a verified
-fixed executable, and an out-of-worker `verify` process. On Windows, a job-object
-supervisor is required if complete child-process tree termination matters.
+fixed executable, and an out-of-worker `verify` process. On Windows, a Job Object configured with kill-on-close and independent
+lifecycle ownership is required if complete child-process tree termination
+matters. On Linux, use a cgroup/container-based supervisor. The subprocess
+cleanup helper is a limited defense in depth, not that supervisor.
 
 An isolated Git worktree and checked `allowedPaths` do **not** by themselves
 prevent malicious tools from writing elsewhere. Do not hand credentials, tokens,
