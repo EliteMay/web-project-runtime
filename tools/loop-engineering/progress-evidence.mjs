@@ -23,7 +23,10 @@ export function evidenceBasedProgress(previousAttempt, receipt) {
       receipt?.verification?.protected !== true ||
       receipt?.verification?.workerTreeCleanAfterVerification !== true ||
       !receipt?.repositoryEvidence?.candidateCommit ||
-      (receipt?.unresolvedItems ?? []).length !== 0) return false;
+      // A failed required check is expected during partial improvement.
+      // All *other* unresolved items remain blockers, not progress.
+      (receipt?.unresolvedItems ?? []).some(item =>
+        !String(item).startsWith('missing_verification_requirements:'))) return false;
 
   const before = previousAttempt.verificationChecks;
   const after = summarizeVerifierChecks(receipt);
