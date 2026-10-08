@@ -70,14 +70,24 @@ export function buildDockerWorkerArgs({
 }
 
 function cleanupContainer(binary, name) {
-  // Kill and remove by our unique, operator-generated name. A failed inspect
-  // alone is NOT evidence of deletion: the daemon itself might be unreachable.
+  // Removal is not verified merely because inspect fails: the daemon
+  // itself may be unavailable, so check its availability separately.
   commandExit(binary, ['kill', name], 5000);
   commandExit(binary, ['rm', '--force', name], 5000);
   const daemon = commandExit(binary, ['info', '--format', '{{.OSType}}'], 5000);
   if (daemon.status !== 0 || daemon.stdout.trim() !== 'linux') return false;
-  const containers = commandExit(binary, [
-    'ps', '--all', '--format', '{{.Names}}', '--filter', 'name=^/' + name + '
+
+  const list = commandExit(binary, [
+    'ps', '--all', '--format', '{{.Names}}', '--filter', 'name=' + name
+  ], 5000);
+  if (list.status !== 0 || list.error) return false;
+
+  const inspect = commandExit(binary, [
+    'container', 'inspect', '--format', '{{.Id}}', name
+  ], 5000);
+  if (inspect.error || inspect.status === 0) return false;
+  return !list.stdout.split(/\r?\n/).includes(name);
+}
 
 export function createDockerIsolatedImplement({
   dockerExecutable, imageId, entrypoint, args = [],
