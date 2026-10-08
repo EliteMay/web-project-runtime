@@ -88,6 +88,7 @@ ready_for_human_merge
 ## Local Coding Agent Bridge (experimental)
 
 - [Local agent adapter / protocol / sandbox and pilot prerequisites](docs/local-agent-bridge.md)
+- [Adversarial safety gate / independent verification / rollback boundary](docs/loop-safety-gate.md)
 - Phase C is still controlled by the existing Loop Policy; the bridge does not choose a paid model or provide OS/network isolation.
 - Real-provider, real-repository autonomous execution is **NOT_RUN**. An independent verifier is mandatory.
 
