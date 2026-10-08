@@ -72,6 +72,7 @@ export function createLocalAgentImplement({
       let bytes = 0;
       let stopReason = null;
       let termination = Promise.resolve();
+      let stopWatchdog = null;
       const child = spawn(executablePath, args, {
         cwd: root, env, shell: false, stdio: ['pipe', 'pipe', 'pipe'],
         windowsHide: true,
@@ -83,12 +84,21 @@ export function createLocalAgentImplement({
         stopReason = reason;
         // Capture cleanup failure immediately; do not leak an unhandled rejection.
         termination = terminateProcessTree(child).then(() => true, () => false);
+        // If the child keeps inherited pipes open after a failed cleanup,
+        // 'close' may never fire. Fail closed instead of hanging indefinitely.
+        stopWatchdog = setTimeout(() => {
+          child.kill('SIGKILL');
+          finish(Object.assign(new Error('LOCAL_AGENT_TREE_KILL_UNVERIFIED'), {
+            code: 'LOCAL_AGENT_TREE_KILL_UNVERIFIED'
+          }));
+        }, 8_000);
       };
       const timer = setTimeout(() => requestStop('LOCAL_AGENT_TIMEOUT'), timeoutMs);
       const finish = error => {
         if (settled) return;
         settled = true;
         clearTimeout(timer);
+        if (stopWatchdog) clearTimeout(stopWatchdog);
         if (error) reject(error);
         else resolve();
       };
