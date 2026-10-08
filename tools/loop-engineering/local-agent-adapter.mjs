@@ -95,13 +95,13 @@ export function createLocalAgentImplement({
       child.on('error', () => finish(new Error('LOCAL_AGENT_START_FAILED')));
       child.on('close', async code => {
         try {
-          if ((await termination) === false) return finish(new Error('LOCAL_AGENT_TREE_KILL_UNVERIFIED'));
+          if ((await termination) === false) return finish(Object.assign(new Error('LOCAL_AGENT_TREE_KILL_UNVERIFIED'), { code: 'LOCAL_AGENT_TREE_KILL_UNVERIFIED' }));
           if (stopReason) return finish(new Error(stopReason));
           if (code !== 0) return finish(new Error('LOCAL_AGENT_NONZERO_EXIT'));
           finish(null);
         } catch {
           // An unverified cleanup is more important than the original timeout.
-          finish(new Error('LOCAL_AGENT_TREE_KILL_UNVERIFIED'));
+          finish(Object.assign(new Error('LOCAL_AGENT_TREE_KILL_UNVERIFIED'), { code: 'LOCAL_AGENT_TREE_KILL_UNVERIFIED' }));
         }
       });
       child.stdin.end(input);
