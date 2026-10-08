@@ -59,6 +59,7 @@ if (process.platform !== 'linux') {
         'if echo escaped >/etc/loop-pilot-leak 2>/dev/null; then exit 11; fi',
         'if test -e /host-should-not-exist; then exit 12; fi',
         "if grep -q 'eth0:' /proc/net/dev; then exit 13; fi",
+        'if wget -T 2 -q -O /tmp/forbidden-network http://1.1.1.1/ 2>/dev/null; then exit 14; fi',
         'echo CONFINED >>/workspace/result.txt'
       ].join('\n');
       const execute = createDockerIsolatedImplement({
