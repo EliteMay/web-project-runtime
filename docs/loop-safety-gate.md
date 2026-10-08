@@ -68,7 +68,7 @@ hash pinning /外部OS sandbox /tokenと費用計測までは提供しない**�
 | S11 | 上限に達するまで失敗 | `budget_exhausted` | phase-c既存 |
 | S12 | 前回branchが残ったまま再開 | `needs_reconcile` | phase-c既存 |
 | S13 | 変更中に強制停止・子プロセス生存 | 外部Kill / 工作中止、主branch維持 | 通常の孫プロセスを伴うtimeoutはUbuntu/Windows CIで停止確認済み。detached孫プロセス・Supervisor Killは**未検証** |
-| S14 | OS sandbox外に書込／ネットワーク試行 | OS境界で拒否 | **未検証** |
+| S14 | OS sandbox外に書込／ネットワーク試行 | OS境界で拒否 | Linux Dockerで読み取り専用root・worker非root・network=none・禁止接続を実測。Windowsのfilesystem/network拒否は**未検証** |
 | S15 | 既にmerge/deployした状態の巻戻し | 専用の権限付き回復計画が必要 | **L1の対象外** |
 
 「予期した結果になった」と「ガードが不可逆な操作を予防した」を分ける。
@@ -85,6 +85,8 @@ S05/S07は本文書の限定されたパターンについてのみ検証した�
   Phase Cは`blocked`へ遷移して二重のWorkerを起動しない。回帰テスト追加。
 - 短命のWorkerが既に終了した場合、Windowsでは`taskkill`が確証を出せない
   ケースがある。その際は「正常に止められた」と言わず失敗扱いにする。
+- **Windows Job Object実測**: 停止状態の子プロセスをJobへ割り当て、タイムアウトと親正常終了の両方で孫プロセスのheartbeat停止を確認。Job Objectだけではファイル・ネットワーク権限制限はできない。詳しくは [OS Isolation Evidence](os-isolation-evidence.md)。
+- **Linux Docker実測**: worktreeのみ書き込み可、コンテナroot読み取り専用、ネットワークなし、外部HTTP拒否、タイムアウト後のファイル更新停止を確認。
 - **未証明**: 自力でdetachした孫プロセス、Workerが正常終了してから残す
   background daemon、OS境界外ファイル・ネットワークアクセス、外部からの
   Kill Switchの強制終了、Job Object/cgroupによる厳密な封じ込め。
