@@ -27,14 +27,36 @@
     "unresolvedItems"
   ],
   "properties": {
-    "schemaVersion": { "const": 1 },
-    "mode": { "const": "phase_c_loop" },
-    "loopId": { "type": "string", "minLength": 1 },
-    "repository": { "type": "string", "pattern": "^[^/\\s]+/[^/\\s]+$" },
-    "taskId": { "type": "string", "minLength": 3 },
-    "lane": { "type": "string", "minLength": 1 },
-    "holderId": { "type": "string", "minLength": 8 },
-    "policyFingerprint": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "schemaVersion": {
+      "const": 1
+    },
+    "mode": {
+      "const": "phase_c_loop"
+    },
+    "loopId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repository": {
+      "type": "string",
+      "pattern": "^[^/\\s]+/[^/\\s]+$"
+    },
+    "taskId": {
+      "type": "string",
+      "minLength": 3
+    },
+    "lane": {
+      "type": "string",
+      "minLength": 1
+    },
+    "holderId": {
+      "type": "string",
+      "minLength": 8
+    },
+    "policyFingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
     "status": {
       "enum": [
         "running",
@@ -48,41 +70,110 @@
         "needs_reconcile"
       ]
     },
-    "startedAt": { "type": "string", "minLength": 1 },
-    "updatedAt": { "type": "string", "minLength": 1 },
-    "completedAt": { "type": ["string", "null"] },
+    "startedAt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "updatedAt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "completedAt": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "repositoryBaseline": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["baseBranch", "baseCommit"],
+      "required": [
+        "baseBranch",
+        "baseCommit"
+      ],
       "properties": {
-        "baseBranch": { "type": "string", "minLength": 1 },
-        "baseCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+        "baseBranch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "baseCommit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        }
       }
     },
     "queue": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["generationRevision", "assignmentRevision", "requirementsRevision"],
+      "required": [
+        "generationRevision",
+        "assignmentRevision",
+        "requirementsRevision"
+      ],
       "properties": {
-        "generationRevision": { "type": "integer", "minimum": 1 },
-        "assignmentRevision": { "type": ["integer", "null"], "minimum": 1 },
-        "requirementsRevision": { "type": "string", "minLength": 1 }
+        "generationRevision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "assignmentRevision": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "requirementsRevision": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
-    "iterationCount": { "type": "integer", "minimum": 0 },
-    "sameFailureCount": { "type": "integer", "minimum": 0 },
-    "lastFailureSignature": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
-    "currentStrategy": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "iterationCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "sameFailureCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "lastFailureSignature": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "currentStrategy": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
     "budgetUsage": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["iterations", "modelTokens", "externalCost", "wallClockMinutes"],
+      "required": [
+        "iterations",
+        "modelTokens",
+        "externalCost",
+        "wallClockMinutes"
+      ],
       "properties": {
-        "iterations": { "type": "integer", "minimum": 0 },
-        "modelTokens": { "type": "integer", "minimum": 0 },
-        "externalCost": { "type": "number", "minimum": 0 },
-        "wallClockMinutes": { "type": "number", "minimum": 0 }
+        "iterations": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "modelTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "externalCost": {
+          "type": "number",
+          "minimum": 0
+        },
+        "wallClockMinutes": {
+          "type": "number",
+          "minimum": 0
+        }
       }
     },
     "attempts": {
@@ -103,35 +194,124 @@
           "unresolvedItems"
         ],
         "properties": {
-          "attempt": { "type": "integer", "minimum": 1 },
-          "receiptFile": { "type": "string", "minLength": 1 },
-          "finalState": { "enum": ["passed", "failed", "blocked"] },
-          "verificationStatus": { "enum": ["pass", "fail", "uncertain", "not_run"] },
-          "failureSignature": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
-          "meaningfulProgress": { "type": "boolean" },
-          "strategy": { "type": "string", "minLength": 1, "maxLength": 120 },
-          "candidateCommit": { "type": ["string", "null"] },
+          "attempt": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "receiptFile": {
+            "type": "string",
+            "minLength": 1
+          },
+          "finalState": {
+            "enum": [
+              "passed",
+              "failed",
+              "blocked"
+            ]
+          },
+          "verificationStatus": {
+            "enum": [
+              "pass",
+              "fail",
+              "uncertain",
+              "not_run"
+            ]
+          },
+          "failureSignature": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "meaningfulProgress": {
+            "type": "boolean"
+          },
+          "strategy": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "candidateCommit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "usage": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["modelTokens", "externalCost", "implementationReported", "verificationReported"],
+            "required": [
+              "modelTokens",
+              "externalCost",
+              "implementationReported",
+              "verificationReported"
+            ],
             "properties": {
-              "modelTokens": { "type": "integer", "minimum": 0 },
-              "externalCost": { "type": "number", "minimum": 0 },
-              "implementationReported": { "type": "boolean" },
-              "verificationReported": { "type": "boolean" }
+              "modelTokens": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "externalCost": {
+                "type": "number",
+                "minimum": 0
+              },
+              "implementationReported": {
+                "type": "boolean"
+              },
+              "verificationReported": {
+                "type": "boolean"
+              }
             }
           },
           "unresolvedItems": {
             "type": "array",
-            "items": { "type": "string", "minLength": 1 }
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "verificationChecks": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "name",
+                "status"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "status": {
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "uncertain",
+                    "not_run"
+                  ]
+                }
+              }
+            }
+          },
+          "noProgressStreak": {
+            "type": "integer",
+            "minimum": 0
           }
         }
       }
     },
     "unresolvedItems": {
       "type": "array",
-      "items": { "type": "string", "minLength": 1 }
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     }
   }
 }
