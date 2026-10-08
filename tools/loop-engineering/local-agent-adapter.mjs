@@ -74,7 +74,8 @@ export function createLocalAgentImplement({
       const requestStop = reason => {
         if (settled || stopReason) return;
         stopReason = reason;
-        termination = terminateProcessTree(child);
+        // Capture cleanup failure immediately; do not leak an unhandled rejection.
+        termination = terminateProcessTree(child).then(() => true, () => false);
       };
       const timer = setTimeout(() => requestStop('LOCAL_AGENT_TIMEOUT'), timeoutMs);
       const finish = error => {
@@ -94,7 +95,7 @@ export function createLocalAgentImplement({
       child.on('error', () => finish(new Error('LOCAL_AGENT_START_FAILED')));
       child.on('close', async code => {
         try {
-          await termination;
+          if ((await termination) === false) return finish(new Error('LOCAL_AGENT_TREE_KILL_UNVERIFIED'));
           if (stopReason) return finish(new Error(stopReason));
           if (code !== 0) return finish(new Error('LOCAL_AGENT_NONZERO_EXIT'));
           finish(null);
