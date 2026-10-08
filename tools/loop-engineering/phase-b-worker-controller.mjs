@@ -145,7 +145,7 @@ function effectivePermissions(policy) {
   };
 }
 
-function normalizeVerification(result, requiredRequirements) {
+function normalizeVerification(result, requiredRequirements, verificationPolicy) {
   const value = result && typeof result === 'object' && !Array.isArray(result) ? result : {};
   const status = ['pass', 'fail', 'uncertain'].includes(value.status) ? value.status : 'uncertain';
   const checks = Array.isArray(value.checks)
@@ -159,9 +159,24 @@ function normalizeVerification(result, requiredRequirements) {
     ? unique(value.satisfiedRequirements.map(String))
     : [];
   const missing = requiredRequirements.filter(requirement => !satisfiedRequirements.includes(requirement));
-  const checksPass = checks.length > 0 && checks.every(check => check.status === 'pass');
+  // A successful result MUST include actual check records for all owner-required
+  // checks. Listing a requirement in satisfiedRequirements does not prove it ran.
+  const requiredCheckNames = unique([
+    ...(verificationPolicy?.requiredChecks ?? []),
+    ...requiredRequirements
+  ]);
+  const names = checks.map(check => check.name);
+  const uniqueNames = new Set(names);
+  const completeInventory = requiredCheckNames.length > 0 &&
+    requiredCheckNames.every(name => uniqueNames.has(name)) &&
+    uniqueNames.size === names.length;
+  const checksPass = checks.length > 0 && checks.every(check =>
+    check.status === 'pass' &&
+    (verificationPolicy?.evidenceRequired !== true || Boolean(check.evidence?.trim()))
+  );
   return {
-    status: status === 'pass' && checksPass && missing.length === 0 ? 'pass' : status === 'pass' ? 'fail' : status,
+    status: status === 'pass' && checksPass && missing.length === 0 && completeInventory
+      ? 'pass' : status === 'pass' ? 'fail' : status,
     checks,
     satisfiedRequirements,
     missingRequirements: missing
@@ -476,7 +491,7 @@ export async function runPhaseBWorker({
       requiredRequirements
     });
     recordUsage(usage, rawVerification, 'verification');
-    const normalizedVerification = normalizeVerification(rawVerification, requiredRequirements);
+    const normalizedVerification = normalizeVerification(rawVerification, requiredRequirements, policy.verification);
     const headAfterVerification = gitOutput(workerDir, ['rev-parse', 'HEAD']);
     const workerTreeCleanAfterVerification = headAfterVerification === candidateCommit && projectionMatches(workerDir, candidateCommit);
     verification = {

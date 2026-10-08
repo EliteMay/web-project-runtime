@@ -412,4 +412,127 @@ function failingVerification() {
   }
 }
 
+
+{
+  // A new failure signature is not evidence of progress if the passing checks
+  // only trade places with failing checks.
+  const fixture = createFixture({ budget: { maxIterations: 4, maxSameFailure: 2 } });
+  try {
+    let verificationRound = 0;
+    const result = await runPhaseCLoop({
+      policyPath: fixture.policyPath,
+      schemaPath: fixture.schemaPath,
+      queueDir: fixture.queueDir,
+      repoRoot: fixture.repoRoot,
+      taskId: 'task-alpha',
+      lane: 'A',
+      holderId: 'phase-c-churn-0001',
+      runDir: fixture.runDir,
+      now: fixture.nowFn,
+      selectStrategy: ({ attempt }) => `different-strategy-${attempt}`,
+      implement: async ({ worktreeDir, attempt }) => {
+        fs.writeFileSync(path.join(worktreeDir, 'src', 'result.txt'), `churn-${attempt}\n`, 'utf8');
+      },
+      verify: async () => {
+        verificationRound++;
+        return {
+          status: 'fail',
+          satisfiedRequirements: [],
+          checks: [
+            { name: 'static validation', status: 'pass', evidence: 'static' },
+            { name: 'runtime check', status: verificationRound === 1 ? 'fail' : 'pass', evidence: 'runtime' },
+            { name: 'task deterministic test', status: verificationRound === 1 ? 'pass' : 'fail', evidence: 'unit' }
+          ]
+        };
+      }
+    });
+    assert.equal(result.state.status, 'stuck');
+    assert.equal(result.state.attempts.length, 2);
+    assert.notEqual(result.state.attempts[0].failureSignature, result.state.attempts[1].failureSignature);
+    assert.equal(result.state.attempts[1].meaningfulProgress, false);
+    assert.equal(result.state.attempts[1].noProgressStreak, 2);
+    assert.ok(result.state.unresolvedItems.includes('max_no_progress_reached'));
+  } finally {
+    cleanup(fixture.root);
+  }
+}
+
+{
+  // A strict reduction in independently observed failing checks is real,
+  // even if the task has not yet reached its final passing state.
+  const fixture = createFixture({ budget: { maxIterations: 4, maxSameFailure: 2 } });
+  try {
+    let verificationRound = 0;
+    const result = await runPhaseCLoop({
+      policyPath: fixture.policyPath,
+      schemaPath: fixture.schemaPath,
+      queueDir: fixture.queueDir,
+      repoRoot: fixture.repoRoot,
+      taskId: 'task-alpha',
+      lane: 'A',
+      holderId: 'phase-c-improvement-0001',
+      runDir: fixture.runDir,
+      now: fixture.nowFn,
+      selectStrategy: ({ attempt }) => `improve-${attempt}`,
+      implement: async ({ worktreeDir, attempt }) => {
+        fs.writeFileSync(path.join(worktreeDir, 'src', 'result.txt'), `improve-${attempt}\n`, 'utf8');
+      },
+      verify: async ({ requiredRequirements }) => {
+        verificationRound++;
+        if (verificationRound === 3) return passingVerification(requiredRequirements);
+        return {
+          status: 'fail',
+          satisfiedRequirements: [],
+          checks: [
+            { name: 'static validation', status: 'pass', evidence: 'static' },
+            { name: 'runtime check', status: verificationRound === 1 ? 'fail' : 'pass', evidence: 'runtime' },
+            { name: 'task deterministic test', status: 'fail', evidence: 'unit' }
+          ]
+        };
+      }
+    });
+    assert.equal(result.state.status, 'passed');
+    assert.equal(result.state.attempts.length, 3);
+    assert.equal(result.state.attempts[0].meaningfulProgress, false);
+    assert.equal(result.state.attempts[1].meaningfulProgress, true);
+    assert.equal(result.state.attempts[1].noProgressStreak, 0);
+  } finally {
+    cleanup(fixture.root);
+  }
+}
+
+{
+  // If an agent timed out and its process-tree termination could not be
+  // established, retrying could create a second concurrent runaway worker.
+  const fixture = createFixture();
+  try {
+    let executions = 0;
+    const result = await runPhaseCLoop({
+      policyPath: fixture.policyPath,
+      schemaPath: fixture.schemaPath,
+      queueDir: fixture.queueDir,
+      repoRoot: fixture.repoRoot,
+      taskId: 'task-alpha',
+      lane: 'A',
+      holderId: 'phase-c-unsafe-cleanup-0001',
+      runDir: fixture.runDir,
+      now: fixture.nowFn,
+      selectStrategy: ({ attempt }) => 'attempt-' + attempt,
+      implement: async () => {
+        executions++;
+        const error = new Error('LOCAL_AGENT_TREE_KILL_UNVERIFIED');
+        error.code = 'LOCAL_AGENT_TREE_KILL_UNVERIFIED';
+        throw error;
+      },
+      verify: async () => { throw new Error('verifier cannot run after failed cleanup'); }
+    });
+    assert.equal(executions, 1, 'must not re-run after uncertain child cleanup');
+    assert.equal(result.state.status, 'blocked');
+    assert.equal(result.state.attempts.length, 1);
+    assert.ok(result.state.unresolvedItems.includes('unsafe_process_cleanup_unverified'));
+  } finally {
+    cleanup(fixture.root);
+  }
+}
+
 console.log('Loop Engineering Phase C tests passed.');

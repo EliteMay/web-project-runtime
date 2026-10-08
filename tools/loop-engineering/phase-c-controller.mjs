@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { runDryRunController } from './dry-run-controller.mjs';
 import { runPhaseBWorker } from './phase-b-worker-controller.mjs';
+import { summarizeVerifierChecks, evidenceBasedProgress, consecutiveNoProgress } from './progress-evidence.mjs';
 import { validateJsonSchema } from './json-schema-lite.mjs';
 import { blockWorkQueueTask } from '../work-queues/block-work-queue.mjs';
 import { branchRef, projectionMatches, refValue, repoRoot } from '../reliability/git-transaction-core.mjs';
@@ -411,7 +412,7 @@ export async function runPhaseCLoop({
     state.queue.assignmentRevision = receipt.queue.assignmentRevision;
     const signature = failureSignature(receipt);
     const previous = state.attempts.at(-1) ?? null;
-    const meaningfulProgress = receipt.finalState === 'passed' || previous == null || signature !== previous.failureSignature;
+    const meaningfulProgress = evidenceBasedProgress(previous, receipt);
     const sameFailureCount = signature && signature === state.lastFailureSignature && !meaningfulProgress
       ? state.sameFailureCount + 1
       : signature ? 1 : 0;
@@ -423,12 +424,14 @@ export async function runPhaseCLoop({
       verificationStatus: receipt.verification?.status ?? 'not_run',
       failureSignature: signature,
       meaningfulProgress,
+      verificationChecks: summarizeVerifierChecks(receipt),
       strategy,
       candidateCommit: receipt.repositoryEvidence?.candidateCommit ?? null,
       usage: receipt.usage ?? { modelTokens: 0, externalCost: 0, implementationReported: false, verificationReported: false },
       unresolvedItems: receipt.unresolvedItems ?? []
     };
     state.attempts.push(attemptRecord);
+    attemptRecord.noProgressStreak = consecutiveNoProgress(state.attempts);
     state.iterationCount = state.attempts.length;
     state.lastFailureSignature = signature;
     state.sameFailureCount = sameFailureCount;
@@ -440,6 +443,19 @@ export async function runPhaseCLoop({
       state.status = 'blocked';
       state.completedAt = state.updatedAt;
       state.unresolvedItems = [...new Set([...(state.unresolvedItems ?? []), ...missingUsage])];
+      blockQueueIfOwned(queueDir, state, state.updatedAt);
+      persistState(finalRunDir, state);
+      break;
+    }
+
+    // A failed OS cleanup may leave a runaway worker behind. Never start
+    // another attempt until an independent supervisor has reconciled it.
+    if ((receipt.unresolvedItems ?? []).includes('phase_b_error:LOCAL_AGENT_TREE_KILL_UNVERIFIED')) {
+      state.status = 'blocked';
+      state.completedAt = state.updatedAt;
+      state.unresolvedItems = [...new Set([
+        ...(state.unresolvedItems ?? []), 'unsafe_process_cleanup_unverified'
+      ])];
       blockQueueIfOwned(queueDir, state, state.updatedAt);
       persistState(finalRunDir, state);
       break;
@@ -474,10 +490,14 @@ export async function runPhaseCLoop({
       break;
     }
 
-    if (policy.progress?.detectSameFailure === true && state.sameFailureCount >= policy.budget.maxSameFailure) {
+    if (policy.progress?.detectSameFailure === true &&
+        (state.sameFailureCount >= policy.budget.maxSameFailure ||
+         attemptRecord.noProgressStreak >= policy.budget.maxSameFailure)) {
       state.status = 'stuck';
       state.completedAt = state.updatedAt;
-      state.unresolvedItems = [...new Set([...(state.unresolvedItems ?? []), 'max_same_failure_reached'])];
+      const reason = attemptRecord.noProgressStreak >= policy.budget.maxSameFailure
+        ? 'max_no_progress_reached' : 'max_same_failure_reached';
+      state.unresolvedItems = [...new Set([...(state.unresolvedItems ?? []), reason])];
       blockQueueIfOwned(queueDir, state, state.updatedAt);
       persistState(finalRunDir, state);
       break;
