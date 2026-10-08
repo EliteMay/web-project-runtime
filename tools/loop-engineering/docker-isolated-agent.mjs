@@ -182,6 +182,8 @@ export function createDockerIsolatedImplement({
 
   ], 5000);
   if (containers.status !== 0 || containers.error) return false;
+  const inspect = commandExit(binary, ['container', 'inspect', '--format', '{{.Id}}', name], 5000);
+  if (inspect.error || inspect.status === 0) return false;
   return !containers.stdout.trim().split(/\r?\n/).includes(name);
 }
 
