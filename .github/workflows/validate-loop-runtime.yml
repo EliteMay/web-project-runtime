@@ -97,11 +97,18 @@ jobs:
           node --check tools/work-queues/block-work-queue.mjs
           node --check tools/loop-engineering/phase-c-control.mjs
           node --check tools/loop-engineering/phase-c-controller.mjs
+          node --check tools/loop-engineering/progress-evidence.mjs
+          node --check tools/loop-engineering/local-agent-adapter.mjs
+          node --check tools/loop-engineering/test-progress-evidence.mjs
+          node --check tools/loop-engineering/test-local-agent-adapter.mjs
           node --check tools/loop-engineering/test-phase-c-controller.mjs
 
-      - name: Test Phase C resume, stuck, budget and control loop
+      - name: Test Phase C progress, local agent bridge and state recovery
         shell: bash
-        run: node tools/loop-engineering/test-phase-c-controller.mjs
+        run: |
+          node tools/loop-engineering/test-progress-evidence.mjs
+          node tools/loop-engineering/test-local-agent-adapter.mjs
+          node tools/loop-engineering/test-phase-c-controller.mjs
 
   phase-d:
     strategy:
