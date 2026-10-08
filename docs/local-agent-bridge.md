@@ -3,6 +3,12 @@
 ## Status
 
 This is an **opt-in transport adapter**, not a deployed or proven autonomous coding agent.
+**Fail-closed default:** `createLocalAgentImplement()` now refuses to launch a
+worker unless `testOnlyAllowUnconfined: true` is explicitly supplied for
+controlled local regression tests. This is intentionally NOT a production
+sandbox implementation. Do not use that test override with a real AI model.
+Real use requires a separate independently verified OS supervisor adapter.
+
 The current loop uses `Phase C → Phase B` with externally supplied `implement`
 and `verify` callbacks. This bridge implements only the `implement` side by
 launching an operator-selected **local executable** once per attempt.
@@ -22,11 +28,13 @@ import { createLocalAgentImplement } from './tools/loop-engineering/local-agent-
 
 // Example only. Use a trusted, fixed executable outside the worker's worktree.
 // It must implement the protocol below; it is NOT an arbitrary interactive CLI.
+// SAFETY: This intentionally refuses to launch until a proper isolated
+// supervisor-backed implementation replaces the test-only local bridge.
 const implement = createLocalAgentImplement({
   executable: '/absolute/path/to/operator-approved-worker',
   args: ['--loop-worker-protocol=1'],
   timeoutMs: 90_000
-});
+}); // => LOCAL_AGENT_OS_SANDBOX_REQUIRED
 
 const result = await runPhaseCLoop({
   policyPath, schemaPath, queueDir, repoRoot, taskId, lane, holderId,
