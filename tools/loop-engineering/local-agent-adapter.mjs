@@ -12,7 +12,8 @@ export function createLocalAgentImplement({
   args = [],
   timeoutMs = 90_000,
   maxOutputBytes = 65_536,
-  maxInputBytes = 32_768
+  maxInputBytes = 32_768,
+  testOnlyAllowUnconfined = false
 } = {}) {
   if (typeof executable !== 'string' || !path.isAbsolute(executable)) {
     throw new Error('Local agent executable must be an operator-selected absolute path.');
@@ -22,6 +23,12 @@ export function createLocalAgentImplement({
   }
   if (![timeoutMs, maxOutputBytes, maxInputBytes].every(x => Number.isSafeInteger(x) && x > 0)) {
     throw new Error('Local agent budgets must be positive safe integers.');
+  }
+  // There is no integrated, independently verifiable OS sandbox yet.
+  // This utility must NOT silently start a real unattended coding model.
+  // Only CI and disposable fault-injection fixtures may opt into unsafe mode.
+  if (testOnlyAllowUnconfined !== true) {
+    throw new Error('LOCAL_AGENT_OS_SANDBOX_REQUIRED');
   }
   const executablePath = fs.realpathSync.native(executable);
   if (!fs.statSync(executablePath).isFile()) throw new Error('Local agent executable must be a file.');
