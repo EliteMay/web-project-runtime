@@ -218,3 +218,25 @@ jobs:
       - name: Fault inject outside-filesystem write, no-network, and worker timeout
         shell: bash
         run: node tools/loop-engineering/test-docker-isolated-agent.mjs
+
+  isolation-windows-job:
+    runs-on: windows-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout Runtime repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - name: Build native Windows Job Object supervisor with installed .NET SDK
+        shell: pwsh
+        run: |
+          dotnet --version
+          dotnet build tools/loop-engineering/windows-job-supervisor/WindowsJobSupervisor.csproj --configuration Release --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Test native Job Object terminates detached grandchild on timeout and normal exit
+        shell: pwsh
+        run: |
+          node tools/loop-engineering/test-windows-job-supervisor.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
