@@ -29,12 +29,14 @@ const context = {
 };
 const node = process.execPath;
 const runner = (code, extras = {}) => createLocalAgentImplement({
-  executable: node, args: ['-e', code], timeoutMs: 4_000, ...extras
+  executable: node, args: ['-e', code], timeoutMs: 4_000,
+  testOnlyAllowUnconfined: true, ...extras
 });
 
 try {
   assert.throws(() => createLocalAgentImplement({ executable: 'node' }), /absolute path/);
   assert.throws(() => createLocalAgentImplement({ executable: node, timeoutMs: 0 }), /positive/);
+  assert.throws(() => createLocalAgentImplement({ executable: node }), /LOCAL_AGENT_OS_SANDBOX_REQUIRED/);
 
   // Simulate a real external coding worker using stdin rather than a callback
   // that directly writes files inside the loop controller.
@@ -76,7 +78,8 @@ try {
   const workerControlledExecutable = path.join(worktreeDir, 'unsafe-runner.js');
   fs.writeFileSync(workerControlledExecutable, 'process.exit(0)');
   await assert.rejects(
-    createLocalAgentImplement({ executable: workerControlledExecutable })(context),
+    createLocalAgentImplement({ executable: workerControlledExecutable,
+      testOnlyAllowUnconfined: true })(context),
     /worker-editable tree/
   );
 } finally {
