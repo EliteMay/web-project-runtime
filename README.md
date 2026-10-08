@@ -85,6 +85,12 @@ ready_for_human_merge
 - stale base / divergent remote branchは`needs_reconcile`
 - review branchとbase branchの同一指定を拒否
 
+## Local Coding Agent Bridge (experimental)
+
+- [Local agent adapter / protocol / sandbox and pilot prerequisites](docs/local-agent-bridge.md)
+- Phase C is still controlled by the existing Loop Policy; the bridge does not choose a paid model or provide OS/network isolation.
+- Real-provider, real-repository autonomous execution is **NOT_RUN**. An independent verifier is mandatory.
+
 ## Validation
 
 Public GitHub ActionsでPhase A–EをUbuntu / Windowsの両方でRegressionします。Private `web-project-data`はCIへcheckoutしません。
