@@ -67,12 +67,28 @@ hash pinning /外部OS sandbox /tokenと費用計測までは提供しない**�
 | S10 | Verifier例外／検証基準不明 | `uncertain` → Controller `blocked` | pilot-verifier + phase-c既存 |
 | S11 | 上限に達するまで失敗 | `budget_exhausted` | phase-c既存 |
 | S12 | 前回branchが残ったまま再開 | `needs_reconcile` | phase-c既存 |
-| S13 | 変更中に強制停止・子プロセス生存 | 外部Kill / 工作中止、主branch維持 | **OS実環境では未検証** |
+| S13 | 変更中に強制停止・子プロセス生存 | 外部Kill / 工作中止、主branch維持 | 通常の孫プロセスを伴うtimeoutはUbuntu/Windows CIで停止確認済み。detached孫プロセス・Supervisor Killは**未検証** |
 | S14 | OS sandbox外に書込／ネットワーク試行 | OS境界で拒否 | **未検証** |
 | S15 | 既にmerge/deployした状態の巻戻し | 専用の権限付き回復計画が必要 | **L1の対象外** |
 
 「予期した結果になった」と「ガードが不可逆な操作を予防した」を分ける。
 S05/S07は本文書の限定されたパターンについてのみ検証したことにする。
+
+## 2026-10-09 停止経路の実測と残る制約
+
+- `process-tree-stop.mjs` を追加。POSIX private process groupへのSIGKILL、
+  Windows `taskkill /T /F` で通常のdescendantも停止対象にする。
+- `test-process-tree-stop.mjs` で孫プロセスに連続heartbeatを書かせ、
+  worker timeout後のheartbeatが変化しないことをUbuntu/Windows CIで検証。
+  [Run #29](https://github.com/EliteMay/web-project-runtime/actions/runs/37803693148) PASS。
+- プロセスツリー停止に失敗した場合 `LOCAL_AGENT_TREE_KILL_UNVERIFIED` を返し、
+  Phase Cは`blocked`へ遷移して二重のWorkerを起動しない。回帰テスト追加。
+- 短命のWorkerが既に終了した場合、Windowsでは`taskkill`が確証を出せない
+  ケースがある。その際は「正常に止められた」と言わず失敗扱いにする。
+- **未証明**: 自力でdetachした孫プロセス、Workerが正常終了してから残す
+  background daemon、OS境界外ファイル・ネットワークアクセス、外部からの
+  Kill Switchの強制終了、Job Object/cgroupによる厳密な封じ込め。
+  これらは実AI Pilot開始前の別のGateとして残す。
 
 ## Rollbackの意味を限定する
 
