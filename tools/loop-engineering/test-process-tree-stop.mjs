@@ -36,7 +36,8 @@ const parentCode = `
 try {
   const agent = createLocalAgentImplement({
     executable: process.execPath, args: ['-e', parentCode],
-    timeoutMs: 1400, maxOutputBytes: 8192
+    timeoutMs: 1400, maxOutputBytes: 8192,
+    testOnlyAllowUnconfined: true
   });
   await assert.rejects(agent(context), /LOCAL_AGENT_TIMEOUT/);
   assert.equal(fs.existsSync(marker), true, 'grandchild must have run before timeout');
