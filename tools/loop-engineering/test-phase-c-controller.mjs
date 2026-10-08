@@ -501,4 +501,38 @@ function failingVerification() {
   }
 }
 
+{
+  // If an agent timed out and its process-tree termination could not be
+  // established, retrying could create a second concurrent runaway worker.
+  const fixture = createFixture();
+  try {
+    let executions = 0;
+    const result = await runPhaseCLoop({
+      policyPath: fixture.policyPath,
+      schemaPath: fixture.schemaPath,
+      queueDir: fixture.queueDir,
+      repoRoot: fixture.repoRoot,
+      taskId: 'task-alpha',
+      lane: 'A',
+      holderId: 'phase-c-unsafe-cleanup-0001',
+      runDir: fixture.runDir,
+      now: fixture.nowFn,
+      selectStrategy: ({ attempt }) => 'attempt-' + attempt,
+      implement: async () => {
+        executions++;
+        const error = new Error('LOCAL_AGENT_TREE_KILL_UNVERIFIED');
+        error.code = 'LOCAL_AGENT_TREE_KILL_UNVERIFIED';
+        throw error;
+      },
+      verify: async () => { throw new Error('verifier cannot run after failed cleanup'); }
+    });
+    assert.equal(executions, 1, 'must not re-run after uncertain child cleanup');
+    assert.equal(result.state.status, 'blocked');
+    assert.equal(result.state.attempts.length, 1);
+    assert.ok(result.state.unresolvedItems.includes('unsafe_process_cleanup_unverified'));
+  } finally {
+    cleanup(fixture.root);
+  }
+}
+
 console.log('Loop Engineering Phase C tests passed.');
