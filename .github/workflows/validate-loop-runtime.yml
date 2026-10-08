@@ -200,6 +200,21 @@ jobs:
           docker pull alpine:3.20
           echo "LOOP_TEST_DOCKER_PATH=$(command -v docker)" >> "$GITHUB_ENV"
           echo "LOOP_TEST_DOCKER_IMAGE_ID=$(docker image inspect --format '{{.Id}}' alpine:3.20)" >> "$GITHUB_ENV"
+      - name: Prove base Docker constraints can start with a non-root image worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/loop-docker-smoke"
+          docker --host unix:///var/run/docker.sock run --rm --pull=never \
+            --network=none --read-only --cap-drop=ALL \
+            --security-opt=no-new-privileges=true --pids-limit=32 \
+            --memory=256m --memory-swap=256m --cpus=1 \
+            --user="$(id -u):$(id -g)" \
+            --tmpfs=/tmp:rw,nosuid,nodev,noexec,size=16m \
+            --mount="type=bind,src=$RUNNER_TEMP/loop-docker-smoke,dst=/workspace,rw" \
+            --workdir=/workspace --env=HOME=/tmp --env=TMPDIR=/tmp \
+            --entrypoint /bin/sh "$LOOP_TEST_DOCKER_IMAGE_ID" \
+            -c 'echo smoke >/workspace/ok && cat /workspace/ok'
       - name: Fault inject outside-filesystem write, no-network, and worker timeout
         shell: bash
         run: node tools/loop-engineering/test-docker-isolated-agent.mjs
