@@ -101,6 +101,8 @@ jobs:
           node --check tools/loop-engineering/local-agent-adapter.mjs
           node --check tools/loop-engineering/test-progress-evidence.mjs
           node --check tools/loop-engineering/test-local-agent-adapter.mjs
+          node --check tools/loop-engineering/pilot-verifier.mjs
+          node --check tools/loop-engineering/test-pilot-verifier.mjs
           node --check tools/loop-engineering/test-phase-c-controller.mjs
 
       - name: Test Phase C progress, local agent bridge and state recovery
@@ -108,6 +110,7 @@ jobs:
         run: |
           node tools/loop-engineering/test-progress-evidence.mjs
           node tools/loop-engineering/test-local-agent-adapter.mjs
+          node tools/loop-engineering/test-pilot-verifier.mjs
           node tools/loop-engineering/test-phase-c-controller.mjs
 
   phase-d:
