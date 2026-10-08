@@ -448,6 +448,19 @@ export async function runPhaseCLoop({
       break;
     }
 
+    // A failed OS cleanup may leave a runaway worker behind. Never start
+    // another attempt until an independent supervisor has reconciled it.
+    if ((receipt.unresolvedItems ?? []).includes('phase_b_error:LOCAL_AGENT_TREE_KILL_UNVERIFIED')) {
+      state.status = 'blocked';
+      state.completedAt = state.updatedAt;
+      state.unresolvedItems = [...new Set([
+        ...(state.unresolvedItems ?? []), 'unsafe_process_cleanup_unverified'
+      ])];
+      blockQueueIfOwned(queueDir, state, state.updatedAt);
+      persistState(finalRunDir, state);
+      break;
+    }
+
     if (receipt.finalState === 'passed') {
       state.status = 'passed';
       state.completedAt = state.updatedAt;
