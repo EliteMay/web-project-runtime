@@ -14,7 +14,7 @@ for (const flag of [
   '--network=none', '--read-only', '--cap-drop=ALL',
   '--security-opt=no-new-privileges=true', '--pids-limit=32',
   '--memory=256m', '--memory-swap=256m', '--pull=never',
-  '--mount=type=bind,src=/tmp/disposable-project,dst=/workspace,rw'
+  '--mount=type=bind,src=/tmp/disposable-project,dst=/workspace'
 ]) assert.ok(args.includes(flag), 'missing container boundary: ' + flag);
 assert.ok(!args.some(x => x.includes('/var/run/docker.sock') && x.startsWith('--mount')));
 assert.ok(!args.includes('--privileged'));
