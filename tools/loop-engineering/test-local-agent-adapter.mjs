@@ -57,8 +57,7 @@ try {
   await assert.rejects(runner('process.exit(7)')(context), /LOCAL_AGENT_NONZERO_EXIT/);
   await assert.rejects(
     runner('process.stdout.write("x".repeat(2048))', { maxOutputBytes: 128 })(context),
-    /LOCAL_AGENT_OUTPUT_LIMIT/
-  );
+    // A short-lived worker can disappear before Windows taskkill verifies cleanup.\n    // The adapter must fail closed rather than silently report successful termination.\n    /LOCAL_AGENT_(OUTPUT_LIMIT|TREE_KILL_UNVERIFIED)/\n  );
   await assert.rejects(
     runner('setTimeout(() => {}, 3000)', { timeoutMs: 30 })(context),
     /LOCAL_AGENT_TIMEOUT/
