@@ -1,6 +1,6 @@
 # OS-level Loop Worker Isolation — 実測と残るGate
 
-Status: **Linux disposable Docker sandbox tested / Windows Job Object test pending / real AI NOT_RUN**
+Status: **Linux disposable Docker sandbox tested / Windows native Job Object process containment tested / real AI NOT_RUN**
 Source of truth: `EliteMay/web-project-guide/LOOP_ENGINEERING_REQUIREMENTS.md`.
 This is an implementation evidence memo, not a second policy owner.
 
@@ -32,9 +32,7 @@ This is an implementation evidence memo, not a second policy owner.
 1. Executes real Docker with the same restriction flags used by the adapter.
 2. Writes a valid change to `/workspace`; host observes it.
 3. Attempts to write to `/etc`; denied by readonly root + non-root identity.
-4. Checks that an ordinary external network interface is not exposed (no `eth0`).
-   The definitive policy is `--network=none`; this test does **not** represent
-   comprehensive network intrusion testing.
+4. Checks that an ordinary external network interface is not exposed (no `eth0`) and attempts an outbound HTTP request which must fail. The definitive policy is `--network=none`; this test does **not** represent comprehensive network intrusion testing.
 5. Tries a long-running heartbeat worker, times it out, and checks the marker
    stops changing. The container cleanup is independently checked via `inspect`.
 6. Rejects unsafe Loop Policy and unpinned image IDs before any worker launch.
@@ -59,7 +57,8 @@ host permission and storage threat model.
 
 `test-windows-job-supervisor.mjs` launches a worker that creates a detached
 grandchild writing a heartbeat. It asserts the heartbeat ends both after
-supervisor timeout and after the parent exits normally.
+supervisor timeout and after the parent exits normally. Both tests **PASS** on
+Windows GitHub Actions [Run #](https://github.com/EliteMay/web-project-runtime/actions/runs/37805975894).
 
 **Important:** Job Object is **process lifecycle containment only**.
 It does not deny the worker host filesystem access, the internet, token access,
