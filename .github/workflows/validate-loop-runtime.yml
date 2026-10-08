@@ -105,6 +105,8 @@ jobs:
           node --check tools/loop-engineering/test-process-tree-stop.mjs
           node --check tools/loop-engineering/pilot-verifier.mjs
           node --check tools/loop-engineering/test-pilot-verifier.mjs
+          node --check tools/loop-engineering/docker-isolated-agent.mjs
+          node --check tools/loop-engineering/test-docker-isolated-agent.mjs
           node --check tools/loop-engineering/test-phase-c-controller.mjs
 
       - name: Test Phase C progress, local agent bridge and state recovery
@@ -114,6 +116,7 @@ jobs:
           node tools/loop-engineering/test-local-agent-adapter.mjs
           node tools/loop-engineering/test-process-tree-stop.mjs
           node tools/loop-engineering/test-pilot-verifier.mjs
+          node tools/loop-engineering/test-docker-isolated-agent.mjs
           node tools/loop-engineering/test-phase-c-controller.mjs
 
   phase-d:
@@ -177,3 +180,26 @@ jobs:
         env:
           LOOP_GUIDE_ROOT: ${{ github.workspace }}/guide-current
         run: node tools/loop-engineering/test-phase-e-controller.mjs
+
+  isolation-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout Runtime repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - name: Prepare offline-pinned Docker test fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v docker
+          docker info --format '{{.OSType}}'
+          docker pull alpine:3.20
+          echo "LOOP_TEST_DOCKER_PATH=$(command -v docker)" >> "$GITHUB_ENV"
+          echo "LOOP_TEST_DOCKER_IMAGE_ID=$(docker image inspect --format '{{.Id}}' alpine:3.20)" >> "$GITHUB_ENV"
+      - name: Fault inject outside-filesystem write, no-network, and worker timeout
+        shell: bash
+        run: node tools/loop-engineering/test-docker-isolated-agent.mjs
